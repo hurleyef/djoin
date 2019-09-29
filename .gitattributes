@@ -1,14 +1,10 @@
-# Set the default behavior, in case people don't have core.autocrlf set.
-* text eol=lf
+# Auto detect text files and perform LF normalization
+* text=auto
 
-# Explicitly declare text files you want to always be normalized and converted
-# to native line endings on checkout.
-*.sh text
-*.md text
+*.sh   diff=astextplain
 
-# Declare files that will always have CRLF line endings on checkout.
-*.sln text eol=crlf
+# absolute paths are ok, as are globs
+/**/postinst* text eol=lf
 
-# Denote all files that are truly binary and should not be modified.
-*.png binary
-*.jpg binary
+# paths that don't start with / are treated relative to the .gitattributes folder
+relative/path/*.txt text eol=lf
