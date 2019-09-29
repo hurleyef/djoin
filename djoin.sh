@@ -221,7 +221,7 @@ if $HELP; then
     eval $ECHOCMD "  -p, --no-sudo-pass                Allow sudo without a password for AD sudoers group."
     eval $ECHOCMD "  -o, --ou-path \<oupath\>            Specifies OU path."
     eval $ECHOCMD ""
-    eval $ECHOCMD "Report bugs to \<github-page\>."
+    eval $ECHOCMD "Report bugs to https://github.com/hurleyef/djoin/"
     exit 0
 fi
 
