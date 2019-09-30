@@ -26,7 +26,7 @@ Joins Linux system to an AD domain.
   -u, --user \<username\>             Specifies domain join user.
   -v, --verbose                     Prints verbose output.
   -d, --domain \<domain\>             Specifies domain to join.
-  -a, --authorized-group \<group\>    Specifies AD group allowed to login in to system. Default is to allow all groups.
-  -s, --sudo-group \<group\>          Specifies AD group to add to sudoers list.
-  -p, --no-sudo-pass                Allow sudo without a password for AD sudoers group.
-  -o, --ou-path \<oupath\>            Specifies OU path.
+  -a, --authorized-group \<group\>    Specifies AD group allowed to login in to system. Default is to allow all groups. 
+  -s, --sudo-group \<group\>          Specifies AD group to add to sudoers list. 
+  -p, --no-sudo-pass                Allow sudo without a password for AD sudoers group. 
+  -o, --ou-path \<oupath\>            Specifies OU path. 
