@@ -269,12 +269,12 @@ done
 eval $ECHOCMD "INSTALLING DEPENDANCIES" $PIPETONULL
 if [ "$DISTRO" == "EL" ]; then
     DEPS="realmd sssd adcli PackageKit sudo samba-common-tools oddjob oddjob-mkhomedir krb5-workstation bind-utils "
-    eval /usr/bin/yum install -y $DEPS
-    eval /usr/bin/yum update -y
+    eval /usr/bin/yum install -y $DEPS &>/dev/null
+    eval /usr/bin/yum update -y &>/dev/null
 elif [ "$DISTRO" == "DEB" ]; then
     DEPS="realmd sssd adcli packagekit sudo samba-common sssd-tools samba-common-bin samba-libs krb5-user dnsutils "
-    eval export DEBIAN_FRONTEND=noninteractive; /usr/bin/apt install -yq $DEPS
-    eval export DEBIAN_FRONTEND=noninteractive; /usr/bin/apt update -y
+    eval export DEBIAN_FRONTEND=noninteractive; /usr/bin/apt install -yq $DEPS &>/dev/null
+    eval export DEBIAN_FRONTEND=noninteractive; /usr/bin/apt update -y &>/dev/null
 fi
 
 
@@ -308,7 +308,7 @@ fi
 
 #generate ssh keys
 eval $ECHOCMD "GENERATING NEW SSH HOST KEYS" $PIPETONULL
-/usr/bin/ssh-keygen -A $PIPETONULL
+eval /usr/bin/ssh-keygen -A $PIPETONULL
 
 
 #configure pam
