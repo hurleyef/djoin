@@ -9,7 +9,7 @@ Fedora Server 30</br>
 Debian 9</br>
 Debian 10</br>
 Ubuntu Server 18.04LTS</br>
-and Ubuntu Server 19.04</br>
+Ubuntu Server 19.04</br>
 </br>
 </br>
 Known Issues:</br>
