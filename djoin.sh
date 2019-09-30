@@ -269,12 +269,12 @@ done
 eval $ECHOCMD "INSTALLING DEPENDANCIES" $PIPETONULL
 if [ "$DISTRO" == "EL" ]; then
     DEPS="realmd sssd adcli PackageKit sudo samba-common-tools oddjob oddjob-mkhomedir krb5-workstation bind-utils "
-    eval /usr/bin/yum install -y $DEPS $PIPETONULL
-    eval /usr/bin/yum update -y $PIPETONULL
+    eval /usr/bin/yum install -y $DEPS
+    eval /usr/bin/yum update -y
 elif [ "$DISTRO" == "DEB" ]; then
     DEPS="realmd sssd adcli packagekit sudo samba-common sssd-tools samba-common-bin samba-libs krb5-user dnsutils "
-    eval export DEBIAN_FRONTEND=noninteractive; /usr/bin/apt install -yq $DEPS $PIPETONULL
-    eval export DEBIAN_FRONTEND=noninteractive; /usr/bin/apt update -y $PIPETONULL
+    eval export DEBIAN_FRONTEND=noninteractive; /usr/bin/apt install -yq $DEPS
+    eval export DEBIAN_FRONTEND=noninteractive; /usr/bin/apt update -y
 fi
 
 
