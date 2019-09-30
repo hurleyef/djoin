@@ -280,7 +280,7 @@ fi
 
 #test domain connectivity
 eval $ECHOCMD "LOCATING DOMAIN CRONTROLLER FOR ${DOMAIN^^}" $PIPETONULL
-if ! /usr/bin/nslookup -type=SRV _ldap._tcp.dc._msdcs.$DOMAIN $PIPETONULL; then
+if ! eval /usr/bin/nslookup -type=SRV _ldap._tcp.dc._msdcs.$DOMAIN $PIPETONULL; then
     eval $ECHOCMD "ERROR: Cannot locate domain $DOMAIN."
     exit 1
 fi
