@@ -108,7 +108,7 @@ if [ $(id -u) -ne 0 ]; then
 fi
 
 
-# saner programming env: these switches turn some bugs into errors
+#saner programming env: these switches turn some bugs into errors
 set -o errexit -o pipefail -o noclobber -o nounset
 
 
@@ -295,8 +295,8 @@ fi
 eval $ECHOCMD "INSTALLING DEPENDANCIES" $PIPETONULL
 if [ "$DISTRO" == "EL" ]; then
     DEPS="realmd sssd adcli PackageKit sudo samba-common-tools oddjob oddjob-mkhomedir krb5-workstation bind-utils"
-    eval /usr/bin/yum install -y $DEPS $PIPETONULL
     eval /usr/bin/yum update -y $PIPETONULL
+    eval /usr/bin/yum install -y $DEPS $PIPETONULL
 elif [ "$DISTRO" == "DEB" ]; then
     DEPS="realmd sssd adcli packagekit sudo samba-common sssd-tools samba-common-bin samba-libs krb5-user dnsutils"
     /usr/bin/apt-get update &>/dev/null
