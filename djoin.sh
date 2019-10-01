@@ -141,13 +141,18 @@ FORCE=$FALSE
 VERBOSE=$FALSE
 NOPASS=$FALSE
 HELP=$FALSE
-DJOINACCOUNT=-
-DOMAIN=`$HOSTNAMECMD -d`
+DJOINACCOUNT=""
+OLDDOMAIN=`$HOSTNAMECMD -d`
+if [ "$OLDDOMAIN" != "localdomain" ]; then
+    DOMAIN=$OLDDOMAIN
+else
+    DOMAIN=""
+fi
 OLDHNAME=`$HOSTNAMECMD -s`
 HNAME=$OLDHNAME
-AUTHGROUP=-
-SUDOGROUP=-
-OUPATH=-
+AUTHGROUP=""
+SUDOGROUP=""
+OUPATH=""
 
 
 #parse arguments
@@ -372,14 +377,14 @@ EOF
 
 
 #prompt for domain join account if not provided
-if [ "$DJOINACCOUNT" == "-" ]; then
+if [ ! "$DJOINACCOUNT" ]; then
     read -p "Username: " DJOINACCOUNT
 fi
 
 
 #define realm command arguments
 REALMARGS="$DOMAIN --user $DJOINACCOUNT --membership-software=adcli"
-if [ "$OUPATH" != "-" ]; then
+if [ "$OUPATH" ]; then
     OUPATH=${OUPATH^^}
     if [ "${OUPATH:0:3}" != "OU=" ]; then
     OUPATH="OU=$OUPATH"
@@ -392,7 +397,10 @@ fi
 JOINCOUNTER=0
 until /usr/sbin/realm list | eval $GREPCMD $DOMAIN &>/dev/null; do
     if [ $JOINCOUNTER -gt 2 ]; then
-        $ECHOCMD "ERROR: Invalid credentials."
+        $ECHOCMD "ERROR: Authorization failure."
+        if [ "$OLDDOMAIN" ]; then
+            OLDHNAME+=".$OLDDOMAIN"
+        fi
         /usr/bin/hostnamectl set-hostname $OLDHNAME
         exit 1
     fi
@@ -441,7 +449,7 @@ $SYSTEMCTLCMD restart sssd.service
 
 
 #configure authorization
-if [ "$AUTHGROUP" != "-" ]; then
+if [ "$AUTHGROUP" ]; then
     /usr/sbin/realm permit --groups "$AUTHGROUP"
 fi
 
@@ -451,7 +459,7 @@ eval /usr/sbin/realm list $PIPETONULL
 
 
 #configure sudo
-if [ "$SUDOGROUP" != "-" ]; then
+if [ "$SUDOGROUP" ]; then
     SUDOGROUP="`$SEDCMD "s/ /\\\\\ /g" <<<"$SUDOGROUP"`"
     if $NOPASS; then
         $ECHOCMD "%$SUDOGROUP    ALL=(ALL)    NOPASSWD:    ALL" | /usr/bin/tee -a /etc/sudoers &>/dev/null
