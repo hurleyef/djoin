@@ -149,7 +149,11 @@ else
     DOMAIN=""
 fi
 OLDHNAME=`$HOSTNAMECMD -s`
-HNAME=$OLDHNAME
+if [ "$OLDHNAME" != "localhost" ]; then
+    HNAME=$OLDHNAME
+else
+    HNAME=""
+fi
 AUTHGROUP=""
 SUDOGROUP=""
 OUPATH=""
@@ -274,6 +278,19 @@ until $IPCMD route | $GREPCMD default &>/dev/null; do
 done
 
 
+#install vmware guest additions if applicable
+if [ `/usr/bin/systemd-detect-virt | $GREPCMD vmware` ]; then
+    eval $ECHOCMD "VMWARE GUEST DETECTED, INSTALLING GUEST ADDITIONS" $PIPETONULL
+    if [ "$DISTRO" == "EL" ]; then
+        eval /usr/bin/yum install open-vm-tools -y $PIPETONULL
+        eval $SYSTEMCTLCMD enable --now vmtoolsd $PIPETONULL
+    elif [ "$DISTRO" == "DEB" ]; then
+        eval /usr/bin/apt install open-vm-tools -y $PIPETONULL
+        eval $SYSTEMCTLCMD enable --now open-vm-tools $PIPETONULL
+    fi
+fi
+
+
 #install dependancies
 eval $ECHOCMD "INSTALLING DEPENDANCIES" $PIPETONULL
 if [ "$DISTRO" == "EL" ]; then
@@ -285,33 +302,6 @@ elif [ "$DISTRO" == "DEB" ]; then
     /usr/bin/apt-get update &>/dev/null
     eval /usr/bin/apt-get upgrade -qq $PIPETONULL
     eval DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install -qq $DEPS $PIPETONULL
-fi
-
-
-#prompt for domain to join if not provided or parsed
-if [ ! "$DOMAIN" ]; then
-    read -p "Domain: " DOMAIN
-fi
-
-
-#test domain connectivity
-eval $ECHOCMD "LOCATING DOMAIN CRONTROLLER FOR ${DOMAIN^^}" $PIPETONULL
-if ! eval /usr/bin/nslookup -type=SRV _ldap._tcp.dc._msdcs.$DOMAIN $PIPETONULL; then
-    $ECHOCMD "ERROR: Cannot locate domain $DOMAIN."
-    exit 1
-fi
-
-
-#install vmware guest additions if applicable
-if [ `/usr/bin/systemd-detect-virt | $GREPCMD vmware` ]; then
-    eval $ECHOCMD "VMWARE GUEST DETECTED, INSTALLING GUEST ADDITIONS" $PIPETONULL
-    if [ "$DISTRO" == "EL" ]; then
-        eval /usr/bin/yum install open-vm-tools -y $PIPETONULL
-        eval $SYSTEMCTLCMD enable --now vmtoolsd $PIPETONULL
-    elif [ "$DISTRO" == "DEB" ]; then
-        eval /usr/bin/apt install open-vm-tools -y $PIPETONULL
-        eval $SYSTEMCTLCMD enable --now open-vm-tools $PIPETONULL
-    fi
 fi
 
 
@@ -329,6 +319,26 @@ eval /usr/bin/ssh-keygen -A $PIPETONULL
 #configure pam
 if [ "$DISTRO" == "DEB" ]; then
     $ECHOCMD "session required pam_mkhomedir.so skel=/etc/skel/ umask=077" | /usr/bin/tee -a /etc/pam.d/common-session &>/dev/null
+fi
+
+
+#prompt for domain to join if not provided or parsed
+if [ ! "$HNAME" ]; then
+    read -p "New Hostname: " HNAME
+fi
+
+
+#prompt for domain to join if not provided or parsed
+if [ ! "$DOMAIN" ]; then
+    read -p "Domain: " DOMAIN
+fi
+
+
+#test domain connectivity
+eval $ECHOCMD "LOCATING DOMAIN CRONTROLLER FOR ${DOMAIN^^}" $PIPETONULL
+if ! eval /usr/bin/nslookup -type=SRV _ldap._tcp.dc._msdcs.$DOMAIN $PIPETONULL; then
+    $ECHOCMD "ERROR: Cannot locate domain $DOMAIN."
+    exit 1
 fi
 
 
