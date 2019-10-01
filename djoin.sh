@@ -386,7 +386,7 @@ fi
 REALMARGS="$DOMAIN --user $DJOINACCOUNT --membership-software=adcli"
 if [ "$OUPATH" ]; then
     OUPATH=${OUPATH^^}
-    if [ "${OUPATH:0:3}" != "OU=" ]; then
+    if [ "${OUPATH:0:3}" != "OU=" ] | [ "${OUPATH:0:3}" != "CN=" ]; then
     OUPATH="OU=$OUPATH"
     fi
     REALMARGS+=" --computer-ou=\"$OUPATH\""
@@ -491,7 +491,7 @@ $ECHOCMD kdestroy | /usr/bin/tee /etc/bash.bash_logout &>/dev/null
 
 
 #remove domain join cronjob and delete script
-#/usr/bin/crontab -l | eval $GREPCMD -v 'djoin.sh'  | /usr/bin/crontab - || true
+#/usr/bin/crontab -l | eval $GREPCMD -v 'djoin.sh'  | /usr/bin/crontab - || $TRUE
 #/usr/bin/rm -- "$0"
 
 
