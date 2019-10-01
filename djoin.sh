@@ -258,7 +258,7 @@ if $FORCE; then
     fi
 elif [ "$ID" == "centos" ] || [ "$ID" == "fedora" ] || [ "$ID" == "rhel" ]; then
         DISTRO="EL"
-    elif [ "$ID" == "debian" ] || [ "$ID" == "ubuntu" ]; then
+    elif [ "$ID" == "debian" ] || [ "$ID" == "ubuntu" ] || [ "$ID" == "raspbian" ]; then
         DISTRO="DEB"
     else
         $ECHOCMD "ERROR: System not compatible. Use --force to ignore this check."
@@ -396,7 +396,7 @@ fi
 REALMARGS="$DOMAIN --user $DJOINACCOUNT --membership-software=adcli"
 if [ "$OUPATH" ]; then
     OUPATH=${OUPATH^^}
-    if [ "${OUPATH:0:3}" != "OU=" ] | [ "${OUPATH:0:3}" != "CN=" ]; then
+    if [ "${OUPATH:0:3}" != "OU=" ] || [ "${OUPATH:0:3}" != "CN=" ]; then
     OUPATH="OU=$OUPATH"
     fi
     REALMARGS+=" --computer-ou=\"$OUPATH\""
