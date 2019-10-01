@@ -8,6 +8,7 @@ Centos 8</br>
 Fedora Server 30</br>
 Debian 9</br>
 Debian 10</br>
+Raspbian 10</br>
 Ubuntu Server 18.04LTS</br>
 Ubuntu Server 19.04</br>
 </br>
