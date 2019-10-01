@@ -256,9 +256,9 @@ if $FORCE; then
         $ECHOCMD "ERROR: System not compatible. Must be RHEL or Debian based."
         exit 1
     fi
-elif [ "$ID" == "centos" ] || [ "$ID" == "fedora" ] || [ "$ID" == "rhel" ]; then
+elif [ "$ID" = "centos" ] || [ "$ID" = "fedora" ] || [ "$ID" = "rhel" ]; then
         DISTRO="EL"
-    elif [ "$ID" == "debian" ] || [ "$ID" == "ubuntu" ] || [ "$ID" == "raspbian" ]; then
+    elif [ "$ID" = "debian" ] || [ "$ID" = "ubuntu" ] || [ "$ID" = "raspbian" ]; then
         DISTRO="DEB"
     else
         $ECHOCMD "ERROR: System not compatible. Use --force to ignore this check."
@@ -281,10 +281,10 @@ done
 #install vmware guest additions if applicable
 if [ `/usr/bin/systemd-detect-virt | $GREPCMD vmware` ]; then
     eval $ECHOCMD "VMWARE GUEST DETECTED, INSTALLING GUEST ADDITIONS" $PIPETONULL
-    if [ "$DISTRO" == "EL" ]; then
+    if [ "$DISTRO" = "EL" ]; then
         eval /usr/bin/yum install open-vm-tools -y $PIPETONULL
         eval $SYSTEMCTLCMD enable --now vmtoolsd $PIPETONULL
-    elif [ "$DISTRO" == "DEB" ]; then
+    elif [ "$DISTRO" = "DEB" ]; then
         eval /usr/bin/apt install open-vm-tools -y $PIPETONULL
         eval $SYSTEMCTLCMD enable --now open-vm-tools $PIPETONULL
     fi
@@ -293,11 +293,11 @@ fi
 
 #install dependancies
 eval $ECHOCMD "INSTALLING DEPENDANCIES" $PIPETONULL
-if [ "$DISTRO" == "EL" ]; then
+if [ "$DISTRO" = "EL" ]; then
     DEPS="realmd sssd adcli PackageKit sudo samba-common-tools oddjob oddjob-mkhomedir krb5-workstation bind-utils"
     eval /usr/bin/yum update -y $PIPETONULL
     eval /usr/bin/yum install -y $DEPS $PIPETONULL
-elif [ "$DISTRO" == "DEB" ]; then
+elif [ "$DISTRO" = "DEB" ]; then
     DEPS="realmd sssd adcli packagekit sudo samba-common sssd-tools samba-common-bin samba-libs krb5-user dnsutils"
     /usr/bin/apt-get update &>/dev/null
     eval /usr/bin/apt-get upgrade -qq $PIPETONULL
@@ -396,7 +396,7 @@ fi
 REALMARGS="$DOMAIN --user $DJOINACCOUNT --membership-software=adcli"
 if [ "$OUPATH" ]; then
     OUPATH=${OUPATH^^}
-    if [ "${OUPATH:0:3}" != "OU=" ] || [ "${OUPATH:0:3}" != "CN=" ]; then
+    if [ "${OUPATH:0:3}" != "OU=" ] && [ "${OUPATH:0:3}" != "CN=" ]; then
     OUPATH="OU=$OUPATH"
     fi
     REALMARGS+=" --computer-ou=\"$OUPATH\""
@@ -482,10 +482,10 @@ fi
 #configure ssh to use gssapi and disable root login
 $SEDCMD -i "s/GSSAPICleanupCredentials no/GSSAPICleanupCredentials yes/g" /etc/ssh/sshd_config
 $SEDCMD -i "s/PermitRootLogin yes/#PermitRootLogin yes/g" /etc/ssh/sshd_config
-if [ "$DISTRO" == "EL" ]; then
+if [ "$DISTRO" = "EL" ]; then
     $SEDCMD -i "s/GSSAPICleanupCredentials no/GSSAPICleanupCredentials yes/g" /etc/ssh/sshd_config
     $SEDCMD -i "s/PermitRootLogin yes/PermitRootLogin no/g" /etc/ssh/sshd_config
-elif [ "$DISTRO" == "DEB" ]; then
+elif [ "$DISTRO" = "DEB" ]; then
     $SEDCMD -i "s/#GSSAPIAuthentication no/GSSAPIAuthentication yes/g" /etc/ssh/sshd_config
     $SEDCMD -i '/GSSAPICleanupCredentials/s/^#//g' /etc/ssh/sshd_config
     $SEDCMD -i "/PermitRootLogin yes/d" /etc/ssh/sshd_config
