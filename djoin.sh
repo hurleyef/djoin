@@ -71,6 +71,16 @@ else
 fi
 
 
+#find and set hostname command
+if [ -f /usr/bin/hostname ]; then
+    HOSTNAMECMD="/usr/bin/hostname"
+elif [ -f /bin/hostname ]; then
+    HOSTNAMECMD="/bin/hostname"
+else
+    exit 1
+fi
+
+
 #find and set true
 if [ -f /usr/bin/true ]; then
     TRUE="/usr/bin/true"
@@ -93,7 +103,7 @@ fi
 
 #check for root
 if [ $(id -u) -ne 0 ]; then
-   eval $ECHOCMD "This script must be run as root"
+   $ECHOCMD "This script must be run as root"
    exit 1
 fi
 
@@ -102,11 +112,9 @@ fi
 set -o errexit -o pipefail -o noclobber -o nounset
 
 
-# -allow a command to fail with !’s side effect on errexit
-# -use return value from ${PIPESTATUS[0]}, because ! hosed $?
+#test getopt
 ! /usr/bin/getopt --test > /dev/null 
 if [[ ${PIPESTATUS[0]} -ne 4 ]]; then
-    eval $ECHOCMD 'I’m sorry, `getopt --test` failed in this environment.'
     exit 1
 fi
 
@@ -116,14 +124,9 @@ OPTIONS=hn:rfu:vd:a:ps:o:
 LONGOPTS=help,newname:,reboot,force,user:,verbose,domain:,authorized-group:,no-sudo-pass,sudo-group:,ou-path:
 
 
-# -regarding ! and PIPESTATUS see above
-# -temporarily store output to be able to check for errors
-# -activate quoting/enhanced mode (e.g. by writing out “--options”)
-# -pass arguments only via   -- "$@"   to separate them correctly
+#test args
 ! PARSED=$(/usr/bin/getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@")
 if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
-    # e.g. return value is 1
-    #  then getopt has complained about wrong arguments to stdout
     exit 2
 fi
 
@@ -139,8 +142,9 @@ VERBOSE=$FALSE
 NOPASS=$FALSE
 HELP=$FALSE
 DJOINACCOUNT=-
-DOMAIN=`hostname -d`
-HNAME=`hostname -s`
+DOMAIN=`$HOSTNAMECMD -d`
+OLDHNAME=`$HOSTNAMECMD -s`
+HNAME=$OLDHNAME
 AUTHGROUP=-
 SUDOGROUP=-
 OUPATH=-
@@ -198,7 +202,7 @@ while true; do
             break
             ;;
         *)
-            eval $ECHOCMD "Programming error"
+            $ECHOCMD "Programming error"
             exit 3
             ;;
     esac
@@ -206,22 +210,22 @@ done
 
 #help
 if $HELP; then
-    eval $ECHOCMD "Usage: $0 [options]"
-    eval $ECHOCMD "Joins Linux system to an AD domain."
-    eval $ECHOCMD ""
-    eval $ECHOCMD "  -h, --help                        Print this help and exit successfully."
-    eval $ECHOCMD "  -n, --newname \<hostname\>          Renames host before joining to domain."
-    eval $ECHOCMD "  -r, --reboot                      Reboots host after domain join."
-    eval $ECHOCMD "  -f, --force                       Ignore system compatability checks. Only works on RHEL and Debian based systems."
-    eval $ECHOCMD "  -u, --user \<username\>             Specifies domain join user."
-    eval $ECHOCMD "  -v, --verbose                     Prints verbose output."
-    eval $ECHOCMD "  -d, --domain \<domain\>             Specifies domain to join."
-    eval $ECHOCMD "  -a, --authorized-group \<group\>    Specifies AD group allowed to login in to system. Default is to allow all groups."
-    eval $ECHOCMD "  -s, --sudo-group \<group\>          Specifies AD group to add to sudoers list."
-    eval $ECHOCMD "  -p, --no-sudo-pass                Allow sudo without a password for AD sudoers group."
-    eval $ECHOCMD "  -o, --ou-path \<oupath\>            Specifies OU path."
-    eval $ECHOCMD ""
-    eval $ECHOCMD "Report bugs to https://github.com/hurleyef/djoin/"
+    $ECHOCMD "Usage: $0 [options]"
+    $ECHOCMD "Joins Linux system to an AD domain."
+    $ECHOCMD ""
+    $ECHOCMD "  -h, --help                        Print this help and exit successfully."
+    $ECHOCMD "  -n, --newname <hostname>          Renames host before joining to domain."
+    $ECHOCMD "  -r, --reboot                      Reboots host after domain join."
+    $ECHOCMD "  -f, --force                       Ignore system compatability checks. Only works on RHEL and Debian based systems."
+    $ECHOCMD "  -u, --user <username>             Specifies domain join user."
+    $ECHOCMD "  -v, --verbose                     Prints verbose output."
+    $ECHOCMD "  -d, --domain <domain>             Specifies domain to join."
+    $ECHOCMD "  -a, --authorized-group <group>    Specifies AD group allowed to login in to system. Default is to allow all groups."
+    $ECHOCMD "  -s, --sudo-group <group>          Specifies AD group to add to sudoers list."
+    $ECHOCMD "  -p, --no-sudo-pass                Allow sudo without a password for AD sudoers group."
+    $ECHOCMD "  -o, --ou-path <oupath>            Specifies OU path."
+    $ECHOCMD ""
+    $ECHOCMD "Report bugs to https://github.com/hurleyef/djoin/"
     exit 0
 fi
 
@@ -233,14 +237,14 @@ fi
 
 
 #detect OS
-source /etc/os-release
+. /etc/os-release
 if $FORCE; then
     if [ -f /usr/bin/yum ]; then
         DISTRO="EL"
     elif [ -f /usr/bin/apt ]; then
         DISTRO="DEB"
     else
-        eval $ECHOCMD "ERROR: System not compatible. Must be RHEL or Debian based."
+        $ECHOCMD "ERROR: System not compatible. Must be RHEL or Debian based."
         exit 1
     fi
 elif [ "$ID" == "centos" ] || [ "$ID" == "fedora" ] || [ "$ID" == "rhel" ]; then
@@ -248,19 +252,19 @@ elif [ "$ID" == "centos" ] || [ "$ID" == "fedora" ] || [ "$ID" == "rhel" ]; then
     elif [ "$ID" == "debian" ] || [ "$ID" == "ubuntu" ]; then
         DISTRO="DEB"
     else
-        eval $ECHOCMD "ERROR: System not compatible. Use --force to ignore this check."
+        $ECHOCMD "ERROR: System not compatible. Use --force to ignore this check."
         exit 1
 fi
 
 
 #wait for network, fail after 20 seconds
 NETWAIT=0
-until eval $IPCMD route | eval $GREPCMD default &>/dev/null; do
+until $IPCMD route | $GREPCMD default &>/dev/null; do
     if [ $NETWAIT -gt 20 ]; then
-        eval $ECHOCMD "ERROR: No network detected."
+        $ECHOCMD "ERROR: No network detected."
         exit 1
     fi
-    eval $SLEEPCMD 1
+    $SLEEPCMD 1
     NETWAIT=$((NETWAIT+1))
 done
 
@@ -268,26 +272,33 @@ done
 #install dependancies
 eval $ECHOCMD "INSTALLING DEPENDANCIES" $PIPETONULL
 if [ "$DISTRO" == "EL" ]; then
-    DEPS="realmd sssd adcli PackageKit sudo samba-common-tools oddjob oddjob-mkhomedir krb5-workstation bind-utils "
-    eval /usr/bin/yum install -y $DEPS &>/dev/null
-    eval /usr/bin/yum update -y &>/dev/null
+    DEPS="realmd sssd adcli PackageKit sudo samba-common-tools oddjob oddjob-mkhomedir krb5-workstation bind-utils"
+    eval /usr/bin/yum install -y $DEPS $PIPETONULL
+    eval /usr/bin/yum update -y $PIPETONULL
 elif [ "$DISTRO" == "DEB" ]; then
-    DEPS="realmd sssd adcli packagekit sudo samba-common sssd-tools samba-common-bin samba-libs krb5-user dnsutils "
-    eval export DEBIAN_FRONTEND=noninteractive; /usr/bin/apt install -yq $DEPS &>/dev/null
-    eval export DEBIAN_FRONTEND=noninteractive; /usr/bin/apt update -y &>/dev/null
+    DEPS="realmd sssd adcli packagekit sudo samba-common sssd-tools samba-common-bin samba-libs krb5-user dnsutils"
+    /usr/bin/apt-get update &>/dev/null
+    eval /usr/bin/apt-get upgrade -qq $PIPETONULL
+    eval DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install -qq $DEPS $PIPETONULL
+fi
+
+
+#prompt for domain to join if not provided or parsed
+if [ ! "$DOMAIN" ]; then
+    read -p "Domain: " DOMAIN
 fi
 
 
 #test domain connectivity
 eval $ECHOCMD "LOCATING DOMAIN CRONTROLLER FOR ${DOMAIN^^}" $PIPETONULL
 if ! eval /usr/bin/nslookup -type=SRV _ldap._tcp.dc._msdcs.$DOMAIN $PIPETONULL; then
-    eval $ECHOCMD "ERROR: Cannot locate domain $DOMAIN."
+    $ECHOCMD "ERROR: Cannot locate domain $DOMAIN."
     exit 1
 fi
 
 
 #install vmware guest additions if applicable
-if [ `/usr/bin/systemd-detect-virt | eval $GREPCMD vmware` ]; then
+if [ `/usr/bin/systemd-detect-virt | $GREPCMD vmware` ]; then
     eval $ECHOCMD "VMWARE GUEST DETECTED, INSTALLING GUEST ADDITIONS" $PIPETONULL
     if [ "$DISTRO" == "EL" ]; then
         eval /usr/bin/yum install open-vm-tools -y $PIPETONULL
@@ -301,9 +312,8 @@ fi
 
 #enable sssd
 if [ "$DISTRO" == "EL" ]; then
-    eval $SYSTEMCTLCMD enable --now sssd.service &>/dev/null
+    $SYSTEMCTLCMD enable --now sssd.service &>/dev/null
 fi
-
 
 
 #generate ssh keys
@@ -313,7 +323,7 @@ eval /usr/bin/ssh-keygen -A $PIPETONULL
 
 #configure pam
 if [ "$DISTRO" == "DEB" ]; then
-    eval $ECHOCMD "session required pam_mkhomedir.so skel=/etc/skel/ umask=077" | /usr/bin/tee -a /etc/pam.d/common-session &>/dev/null
+    $ECHOCMD "session required pam_mkhomedir.so skel=/etc/skel/ umask=077" | /usr/bin/tee -a /etc/pam.d/common-session &>/dev/null
 fi
 
 
@@ -367,25 +377,31 @@ if [ "$DJOINACCOUNT" == "-" ]; then
 fi
 
 
-#prompt for password
-read -srp "Password: " DJOINPASSWORD
+#define realm command arguments
+REALMARGS="$DOMAIN --user $DJOINACCOUNT --membership-software=adcli"
+if [ "$OUPATH" != "-" ]; then
+    OUPATH=${OUPATH^^}
+    if [ "${OUPATH:0:3}" != "OU=" ]; then
+    OUPATH="OU=$OUPATH"
+    fi
+    REALMARGS+=" --computer-ou=\"$OUPATH\""
+fi
 
 
 #join domain
-$ECHOCMD ""
-eval $ECHOCMD "JOINING TO DOMAIN ${DOMAIN^^}" $PIPETONULL
-REALMARGS="$DOMAIN --user $DJOINACCOUNT --membership-software=adcli"
-if [ "$OUPATH" != "-" ]; then
-    eval $ECHOCMD $DJOINPASSWORD | /usr/sbin/realm join $REALMARGS --computer-ou="$OUPATH" &>/dev/null
-else
-    eval $ECHOCMD $DJOINPASSWORD | /usr/sbin/realm join $REALMARGS &>/dev/null
-fi
-if [ $? -eq 0 ]; then
-    eval $ECHOCMD "REALM JOIN SUCCESSFUL" $PIPETONULL
-else
-    $ECHOCMD "REALM JOIN FAILED"
-    exit 1
-fi
+JOINCOUNTER=0
+until /usr/sbin/realm list | eval $GREPCMD $DOMAIN &>/dev/null; do
+    if [ $JOINCOUNTER -gt 2 ]; then
+        $ECHOCMD "ERROR: Invalid credentials."
+        /usr/bin/hostnamectl set-hostname $OLDHNAME
+        exit 1
+    fi
+    #prompt for password
+    read -srp "Password: " DJOINPASSWORD
+    $ECHOCMD ""
+    $ECHOCMD $DJOINPASSWORD | eval /usr/sbin/realm join $REALMARGS &>/dev/null || $TRUE
+    JOINCOUNTER=$((JOINCOUNTER+1))
+done
 
 
 #configure sssd
@@ -420,8 +436,8 @@ dyndns_update_ptr = true
 dyndns_ttl = 3600
 ldap_id_mapping = true
 EOF
-eval $CHMODCMD 600 /etc/sssd/sssd.conf
-eval $SYSTEMCTLCMD restart sssd.service
+$CHMODCMD 600 /etc/sssd/sssd.conf
+$SYSTEMCTLCMD restart sssd.service
 
 
 #configure authorization
@@ -459,11 +475,11 @@ fi
 
 
 #restart ssh
-eval $SYSTEMCTLCMD restart sshd.service
+$SYSTEMCTLCMD restart sshd.service
 
 
 #purge user kerberos tickets on logout
-eval $ECHOCMD kdestroy | /usr/bin/tee /etc/bash.bash_logout &>/dev/null
+$ECHOCMD kdestroy | /usr/bin/tee /etc/bash.bash_logout &>/dev/null
 
 
 #remove domain join cronjob and delete script
@@ -473,11 +489,10 @@ eval $ECHOCMD kdestroy | /usr/bin/tee /etc/bash.bash_logout &>/dev/null
 
 #reboot system
 if $REBOOT; then
-    eval $SYSTEMCTLCMD reboot
+    $SYSTEMCTLCMD reboot
 fi
 
 
 #fin
 exit 0
-
 
