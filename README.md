@@ -14,7 +14,7 @@ Ubuntu Server 19.04</br>
 </br>
 </br>
 Known Issues:</br>
-Some of the Debian based distros require a reboot to register in dns, if they will at all.</br>
+Self registering in DNS fails on DHCP managed scopes. Either manually create the record or configure your DHCP server to do so.</br>
 </br>
 </br>
 Usage: ./djoin.sh [options]</br>
