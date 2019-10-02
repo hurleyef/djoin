@@ -13,9 +13,6 @@ Ubuntu Server 18.04LTS</br>
 Ubuntu Server 19.04</br>
 </br>
 </br>
-Known Issues:</br>
-Self registering in DNS fails on DHCP managed scopes. Either manually create the record or configure your DHCP server to do so.</br>
-</br>
 </br>
 Usage: ./djoin.sh [options]</br>
 Joins Linux system to an AD domain.</br>
