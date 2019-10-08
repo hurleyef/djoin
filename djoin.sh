@@ -1,108 +1,30 @@
 #!/usr/bin/env bash
 
+#function to find commands
+function find_command() {
+    if [[ -f /usr/bin/$1 ]]; then
+        echo "/usr/bin/$1"
+    elif [[ -f /bin/$1 ]]; then
+        echo "/bin/$1"
+    else
+            exit 1
+    fi
+}
 
-#find and set echo command
-if [ -f /usr/bin/echo ]; then
-    ECHOCMD="/usr/bin/echo"
-elif [ -f /bin/echo ]; then
-    ECHOCMD="/bin/echo"
-else
-    exit 1
-fi
-
-
-#find and set ip command
-if [ -f /usr/sbin/ip ]; then
-    IPCMD="/usr/sbin/ip"
-elif [ -f /sbin/ip ]; then
-    IPCMD="/sbin/ip"
-else
-    exit 1
-fi
-
-
-#find and set grep command
-if [ -f /usr/bin/grep ]; then
-    GREPCMD="/usr/bin/grep"
-elif [ -f /bin/grep ]; then
-    GREPCMD="/bin/grep"
-else
-    exit 1
-fi
-
-
-#find and set sleep command
-if [ -f /usr/bin/sleep ]; then
-    SLEEPCMD="/usr/bin/sleep"
-elif [ -f /bin/sleep ]; then
-    SLEEPCMD="/bin/sleep"
-else
-    exit 1
-fi
-
-
-#find and set systemctl command
-if [ -f /usr/bin/systemctl ]; then
-    SYSTEMCTLCMD="/usr/bin/systemctl"
-elif [ -f /bin/systemctl ]; then
-    SYSTEMCTLCMD="/bin/systemctl"
-else
-    exit 1
-fi
-
-
-#find and set chmod command
-if [ -f /usr/bin/chmod ]; then
-    CHMODCMD="/usr/bin/chmod"
-elif [ -f /bin/chmod ]; then
-    CHMODCMD="/bin/chmod"
-else
-    exit 1
-fi
-
-
-#find and set sed command
-if [ -f /usr/bin/sed ]; then
-    SEDCMD="/usr/bin/sed"
-elif [ -f /bin/sed ]; then
-    SEDCMD="/bin/sed"
-else
-    exit 1
-fi
-
-
-#find and set hostname command
-if [ -f /usr/bin/hostname ]; then
-    HOSTNAMECMD="/usr/bin/hostname"
-elif [ -f /bin/hostname ]; then
-    HOSTNAMECMD="/bin/hostname"
-else
-    exit 1
-fi
-
-
-#find and set true
-if [ -f /usr/bin/true ]; then
-    TRUE="/usr/bin/true"
-elif [ -f /bin/true ]; then
-    TRUE="/bin/true"
-else
-    exit 1
-fi
-
-
-#find and set false
-if [ -f /usr/bin/false ]; then
-    FALSE="/usr/bin/false"
-elif [ -f /bin/false ]; then
-    FALSE="/bin/false"
-else
-    exit 1
-fi
-
+#find commands
+ECHOCMD=$(find_command echo) || exit $?
+IPCMD=$(find_command ip) || exit $?
+GREPCMD=$(find_command grep) || exit $?
+SLEEPCMD=$(find_command sleep) || exit $?
+SYSTEMCTLCMD=$(find_command systemctl) || exit $?
+CHMODCMD=$(find_command chmod) || exit $?
+SEDCMD=$(find_command sed) || exit $?
+HOSTNAMECMD=$(find_command hostname) || exit $?
+TRUE=$(find_command true) || exit $?
+FALSE=$(find_command false) || exit $?
 
 #check for root
-if [ $(id -u) -ne 0 ]; then
+if [ $(/usr/bin/id -u) -ne 0 ]; then
    $ECHOCMD "This script must be run as root"
    exit 1
 fi
