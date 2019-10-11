@@ -1,18 +1,29 @@
 #!/usr/bin/env bash
 
+
+#find and set echo command
+if [ -f /usr/bin/echo ]; then
+    ECHOCMD="/usr/bin/echo"
+elif [ -f /bin/echo ]; then
+    ECHOCMD="/bin/echo"
+else
+    exit 1
+fi
+
+
 #function to find commands
 function find_command() {
     if [[ -f /usr/bin/$1 ]]; then
-        echo "/usr/bin/$1"
+        $ECHOCMD "/usr/bin/$1"
     elif [[ -f /bin/$1 ]]; then
-        echo "/bin/$1"
+        $ECHOCMD "/bin/$1"
     else
             exit 1
     fi
 }
 
+
 #find commands
-ECHOCMD=$(find_command echo) || exit $?
 IPCMD=$(find_command ip) || exit $?
 GREPCMD=$(find_command grep) || exit $?
 SLEEPCMD=$(find_command sleep) || exit $?
@@ -22,6 +33,7 @@ SEDCMD=$(find_command sed) || exit $?
 HOSTNAMECMD=$(find_command hostname) || exit $?
 TRUE=$(find_command true) || exit $?
 FALSE=$(find_command false) || exit $?
+
 
 #check for root
 if [ $(/usr/bin/id -u) -ne 0 ]; then
@@ -139,6 +151,7 @@ while true; do
     esac
 done
 
+
 #help
 if $HELP; then
     $ECHOCMD "Usage: $0 [options]"
@@ -159,6 +172,7 @@ if $HELP; then
     $ECHOCMD "Report bugs to https://github.com/hurleyef/djoin/"
     exit 0
 fi
+
 
 #set verbose mode
 PIPETONULL='&>/dev/null'
