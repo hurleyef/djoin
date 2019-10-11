@@ -13,7 +13,9 @@ fi
 
 #function to find commands
 function find_command() {
-    if [[ -f /usr/bin/$1 ]]; then
+    if [[ -f /usr/sbin/$1 ]]; then
+        $ECHOCMD "/usr/sbin/$1"
+    elif [[ -f /usr/bin/$1 ]]; then
         $ECHOCMD "/usr/bin/$1"
     elif [[ -f /bin/$1 ]]; then
         $ECHOCMD "/bin/$1"
