@@ -238,7 +238,7 @@ if [ "$DISTRO" = "EL" ]; then
 elif [ "$DISTRO" = "DEB" ]; then
     DEPS="realmd sssd adcli packagekit sudo samba-common sssd-tools samba-common-bin samba-libs krb5-user dnsutils"
     /usr/bin/apt-get update &>/dev/null
-    eval /usr/bin/apt-get upgrade -qq $PIPETONULL
+    eval DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get upgrade -qq $PIPETONULL
     eval DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install -qq $DEPS $PIPETONULL
 fi
 
