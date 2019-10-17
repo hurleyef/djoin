@@ -33,6 +33,7 @@ SYSTEMCTLCMD=$(find_command systemctl) || exit $?
 CHMODCMD=$(find_command chmod) || exit $?
 SEDCMD=$(find_command sed) || exit $?
 HOSTNAMECMD=$(find_command hostname) || exit $?
+CATCMD=$(find_command cat) || exit $?
 TRUE=$(find_command true) || exit $?
 FALSE=$(find_command false) || exit $?
 
@@ -409,7 +410,7 @@ eval /usr/sbin/realm list $PIPETONULL
 #configure sudo
 if [[ "$SUDOGROUP" ]]; then
     SUDOGROUP="`$SEDCMD "s/ /\\\\\ /g" <<< "$SUDOGROUP"`"
-    if  [[ $(cat /etc/sudoers | $GREPCMD "%$($SEDCMD 's/\\/\\\\/g' <<< $SUDOGROUP)") ]]; then
+    if  [[ $($CATCMD /etc/sudoers | $GREPCMD "%$($SEDCMD 's/\\/\\\\/g' <<< $SUDOGROUP)") ]]; then
         $SEDCMD -i "/%$($SEDCMD 's/\\/\\\\/g' <<< $SUDOGROUP)/d" /etc/sudoers
     fi
     if $NOPASS; then
