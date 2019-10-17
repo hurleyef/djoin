@@ -410,7 +410,7 @@ eval /usr/sbin/realm list $PIPETONULL
 if [[ "$SUDOGROUP" ]]; then
     SUDOGROUP="`$SEDCMD "s/ /\\\\\ /g" <<< "$SUDOGROUP"`"
     if  [[ $(cat /etc/sudoers | $GREPCMD "%$($SEDCMD 's/\\/\\\\/g' <<< $SUDOGROUP)") ]]; then
-        $SEDCMD -i "/$($SEDCMD 's/\\/\\\\/g' <<< $SUDOGROUP)/d" /etc/sudoers
+        $SEDCMD -i "/%$($SEDCMD 's/\\/\\\\/g' <<< $SUDOGROUP)/d" /etc/sudoers
     fi
     if $NOPASS; then
         $ECHOCMD "%$SUDOGROUP    ALL=(ALL)    NOPASSWD:    ALL" | EDITOR='/usr/bin/tee -a' /usr/sbin/visudo &>/dev/null
