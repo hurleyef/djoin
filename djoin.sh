@@ -409,10 +409,11 @@ eval /usr/sbin/realm list $PIPETONULL
 
 #configure sudo
 if [[ "$SUDOGROUP" ]]; then
+    #escape spaces in group name
     SUDOGROUP="`$SEDCMD "s/ /\\\\\ /g" <<< "$SUDOGROUP"`"
-    if  [[ $($CATCMD /etc/sudoers | $GREPCMD "%$($SEDCMD 's/\\/\\\\/g' <<< $SUDOGROUP)") ]]; then
-        $SEDCMD -i "/%$($SEDCMD 's/\\/\\\\/g' <<< $SUDOGROUP)/d" /etc/sudoers
-    fi
+    #remove any preexisting authorization for group
+    $CATCMD /etc/sudoers | $SEDCMD "/%$($SEDCMD 's/\\/\\\\/g' <<< $SUDOGROUP)/Id" | EDITOR='/usr/bin/tee' /usr/sbin/visudo &>/dev/null
+    #authorize group
     if $NOPASS; then
         $ECHOCMD "%$SUDOGROUP    ALL=(ALL)    NOPASSWD:    ALL" | EDITOR='/usr/bin/tee -a' /usr/sbin/visudo &>/dev/null
     else
