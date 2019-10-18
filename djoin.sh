@@ -222,10 +222,10 @@ if [[ $(/usr/bin/systemd-detect-virt | $GREPCMD vmware) ]]; then
     eval $ECHOCMD "VMWARE GUEST DETECTED, INSTALLING GUEST ADDITIONS" $PIPETONULL
     if [[ "$DISTRO" = "EL" ]]; then
         eval /usr/bin/yum install open-vm-tools -y $PIPETONULL
-        eval $SYSTEMCTLCMD enable --now vmtoolsd $PIPETONULL
+        eval "$SYSTEMCTLCMD" enable --now vmtoolsd $PIPETONULL
     elif [[ "$DISTRO" = "DEB" ]]; then
         eval /usr/bin/apt install open-vm-tools -y $PIPETONULL
-        eval $SYSTEMCTLCMD enable --now open-vm-tools $PIPETONULL
+        eval "$SYSTEMCTLCMD" enable --now open-vm-tools $PIPETONULL
     fi
 fi
 
@@ -235,12 +235,12 @@ eval $ECHOCMD "INSTALLING DEPENDANCIES" $PIPETONULL
 if [[ "$DISTRO" = "EL" ]]; then
     DEPS="realmd sssd adcli PackageKit sudo samba-common-tools oddjob oddjob-mkhomedir krb5-workstation bind-utils"
     eval /usr/bin/yum update -y $PIPETONULL
-    eval /usr/bin/yum install -y $DEPS $PIPETONULL
+    eval /usr/bin/yum install -y "$DEPS" $PIPETONULL
 elif [[ "$DISTRO" = "DEB" ]]; then
     DEPS="realmd sssd adcli packagekit sudo samba-common sssd-tools samba-common-bin samba-libs krb5-user dnsutils"
     /usr/bin/apt-get update &>/dev/null
     eval DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get upgrade -qq $PIPETONULL
-    eval DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install -qq $DEPS $PIPETONULL
+    eval DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install -qq "$DEPS" $PIPETONULL
 fi
 
 
@@ -263,26 +263,26 @@ fi
 
 #prompt for domain to join if not provided or parsed
 if [[ ! "$HNAME" ]]; then
-    read -p "New Hostname: " HNAME
+    read -rp "New Hostname: " HNAME
 fi
 
 
 #prompt for domain to join if not provided or parsed
 if [[ ! "$DOMAIN" ]]; then
-    read -p "Domain: " DOMAIN
+    read -rp "Domain: " DOMAIN
 fi
 
 
 #test domain connectivity
 eval $ECHOCMD "LOCATING DOMAIN CRONTROLLER FOR ${DOMAIN^^}" $PIPETONULL
-if ! eval /usr/bin/nslookup -type=SRV _ldap._tcp.dc._msdcs.$DOMAIN $PIPETONULL; then
+if ! eval /usr/bin/nslookup -type=SRV _ldap._tcp.dc._msdcs."$DOMAIN" $PIPETONULL; then
     $ECHOCMD "ERROR: Cannot locate domain $DOMAIN."
     exit 1
 fi
 
 
 #configure hostname
-/usr/bin/hostnamectl set-hostname $HNAME.$DOMAIN
+/usr/bin/hostnamectl set-hostname "$HNAME"."$DOMAIN"
 
 
 #configure kerberos
@@ -327,7 +327,7 @@ EOF
 
 #prompt for domain join account if not provided
 if [[ ! "$DJOINACCOUNT" ]]; then
-    read -p "Username: " DJOINACCOUNT
+    read -rp "Username: " DJOINACCOUNT
 fi
 
 
@@ -344,19 +344,19 @@ fi
 
 #join domain
 JOINCOUNTER=0
-until /usr/sbin/realm list | eval $GREPCMD $DOMAIN &>/dev/null; do
+until /usr/sbin/realm list | eval "$GREPCMD" "$DOMAIN" &>/dev/null; do
     if [[ $JOINCOUNTER -gt 2 ]]; then
         $ECHOCMD "ERROR: Authorization failure."
         if [[ "$OLDDOMAIN" ]]; then
             OLDHNAME+=".$OLDDOMAIN"
         fi
-        /usr/bin/hostnamectl set-hostname $OLDHNAME
+        /usr/bin/hostnamectl set-hostname "$OLDHNAME"
         exit 1
     fi
     #prompt for password
     read -srp "Password: " DJOINPASSWORD
     $ECHOCMD ""
-    $ECHOCMD $DJOINPASSWORD | eval /usr/sbin/realm join $REALMARGS &>/dev/null || $TRUE
+    $ECHOCMD "$DJOINPASSWORD" | eval /usr/sbin/realm join "$REALMARGS" &>/dev/null || $TRUE
     JOINCOUNTER=$((JOINCOUNTER+1))
 done
 
@@ -412,7 +412,7 @@ if [[ "$SUDOGROUP" ]]; then
     #escape spaces in group name
     SUDOGROUP="$($SEDCMD "s/ /\\\\\ /g" <<< "$SUDOGROUP")"
     #remove any preexisting authorization for group
-    $CATCMD /etc/sudoers | $SEDCMD "/%$($SEDCMD 's/\\/\\\\/g' <<< $SUDOGROUP)/Id" | EDITOR='/usr/bin/tee' /usr/sbin/visudo &>/dev/null
+    $CATCMD /etc/sudoers | $SEDCMD "/%$($SEDCMD 's/\\/\\\\/g' <<< "$SUDOGROUP")/Id" | EDITOR='/usr/bin/tee' /usr/sbin/visudo &>/dev/null
     #authorize group
     if $NOPASS; then
         $ECHOCMD "%$SUDOGROUP    ALL=(ALL)    NOPASSWD:    ALL" | EDITOR='/usr/bin/tee -a' /usr/sbin/visudo &>/dev/null
