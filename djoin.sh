@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
 
+#saner programming env: these switches turn some bugs into errors
+set -o errexit -o pipefail -o noclobber -o nounset
+
+
 #find and set echo command
 if [[ -f /usr/bin/echo ]]; then
     ECHOCMD="/usr/bin/echo"
@@ -43,10 +47,6 @@ if [[ $(/usr/bin/id -u) -ne 0 ]]; then
    $ECHOCMD "This script must be run as root"
    exit 1
 fi
-
-
-#saner programming env: these switches turn some bugs into errors
-set -o errexit -o pipefail -o noclobber -o nounset
 
 
 #test getopt
