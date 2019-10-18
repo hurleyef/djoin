@@ -2,9 +2,9 @@
 
 
 #find and set echo command
-if [ -f /usr/bin/echo ]; then
+if [[ -f /usr/bin/echo ]]; then
     ECHOCMD="/usr/bin/echo"
-elif [ -f /bin/echo ]; then
+elif [[ -f /bin/echo ]]; then
     ECHOCMD="/bin/echo"
 else
     exit 3
@@ -39,7 +39,7 @@ FALSE=$(find_command false) || exit $?
 
 
 #check for root
-if [ $(/usr/bin/id -u) -ne 0 ]; then
+if [[ $(/usr/bin/id -u) -ne 0 ]]; then
    $ECHOCMD "This script must be run as root"
    exit 1
 fi
@@ -79,14 +79,14 @@ VERBOSE=$FALSE
 NOPASS=$FALSE
 HELP=$FALSE
 DJOINACCOUNT=""
-OLDDOMAIN=`$HOSTNAMECMD -d`
-if [ "$OLDDOMAIN" != "localdomain" ]; then
+OLDDOMAIN=$($HOSTNAMECMD -d)
+if [[ "$OLDDOMAIN" != "localdomain" ]]; then
     DOMAIN=$OLDDOMAIN
 else
     DOMAIN=""
 fi
-OLDHNAME=`$HOSTNAMECMD -s`
-if [ "$OLDHNAME" != "localhost" ]; then
+OLDHNAME=$($HOSTNAMECMD -s)
+if [[ "$OLDHNAME" != "localhost" ]]; then
     HNAME=$OLDHNAME
 else
     HNAME=""
@@ -187,17 +187,17 @@ fi
 #detect OS
 . /etc/os-release
 if $FORCE; then
-    if [ -f /usr/bin/yum ]; then
+    if [[ -f /usr/bin/yum ]]; then
         DISTRO="EL"
-    elif [ -f /usr/bin/apt ]; then
+    elif [[ -f /usr/bin/apt ]]; then
         DISTRO="DEB"
     else
         $ECHOCMD "ERROR: System not compatible. Must be RHEL or Debian based."
         exit 1
     fi
-elif [ "$ID" = "centos" ] || [ "$ID" = "fedora" ] || [ "$ID" = "rhel" ]; then
+elif [[ "$ID" = "centos" ]] || [[ "$ID" = "fedora" ]] || [[ "$ID" = "rhel" ]]; then
         DISTRO="EL"
-    elif [ "$ID" = "debian" ] || [ "$ID" = "ubuntu" ] || [ "$ID" = "raspbian" ]; then
+    elif [[ "$ID" = "debian" ]] || [[ "$ID" = "ubuntu" ]] || [[ "$ID" = "raspbian" ]]; then
         DISTRO="DEB"
     else
         $ECHOCMD "ERROR: System not compatible. Use --force to ignore this check."
@@ -208,7 +208,7 @@ fi
 #wait for network, fail after 20 seconds
 NETWAIT=0
 until $IPCMD route | $GREPCMD default &>/dev/null; do
-    if [ $NETWAIT -gt 20 ]; then
+    if [[ $NETWAIT -gt 20 ]]; then
         $ECHOCMD "ERROR: No network detected."
         exit 1
     fi
@@ -218,12 +218,12 @@ done
 
 
 #install vmware guest additions if applicable
-if [ `/usr/bin/systemd-detect-virt | $GREPCMD vmware` ]; then
+if [[ $(/usr/bin/systemd-detect-virt | $GREPCMD vmware) ]]; then
     eval $ECHOCMD "VMWARE GUEST DETECTED, INSTALLING GUEST ADDITIONS" $PIPETONULL
-    if [ "$DISTRO" = "EL" ]; then
+    if [[ "$DISTRO" = "EL" ]]; then
         eval /usr/bin/yum install open-vm-tools -y $PIPETONULL
         eval $SYSTEMCTLCMD enable --now vmtoolsd $PIPETONULL
-    elif [ "$DISTRO" = "DEB" ]; then
+    elif [[ "$DISTRO" = "DEB" ]]; then
         eval /usr/bin/apt install open-vm-tools -y $PIPETONULL
         eval $SYSTEMCTLCMD enable --now open-vm-tools $PIPETONULL
     fi
@@ -232,11 +232,11 @@ fi
 
 #install dependancies
 eval $ECHOCMD "INSTALLING DEPENDANCIES" $PIPETONULL
-if [ "$DISTRO" = "EL" ]; then
+if [[ "$DISTRO" = "EL" ]]; then
     DEPS="realmd sssd adcli PackageKit sudo samba-common-tools oddjob oddjob-mkhomedir krb5-workstation bind-utils"
     eval /usr/bin/yum update -y $PIPETONULL
     eval /usr/bin/yum install -y $DEPS $PIPETONULL
-elif [ "$DISTRO" = "DEB" ]; then
+elif [[ "$DISTRO" = "DEB" ]]; then
     DEPS="realmd sssd adcli packagekit sudo samba-common sssd-tools samba-common-bin samba-libs krb5-user dnsutils"
     /usr/bin/apt-get update &>/dev/null
     eval DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get upgrade -qq $PIPETONULL
@@ -245,7 +245,7 @@ fi
 
 
 #enable sssd
-if [ "$DISTRO" == "EL" ]; then
+if [[ "$DISTRO" == "EL" ]]; then
     $SYSTEMCTLCMD enable --now sssd.service &>/dev/null
 fi
 
@@ -256,19 +256,19 @@ eval /usr/bin/ssh-keygen -A $PIPETONULL
 
 
 #configure pam
-if [ "$DISTRO" == "DEB" ]; then
+if [[ "$DISTRO" == "DEB" ]]; then
     $ECHOCMD "session required pam_mkhomedir.so skel=/etc/skel/ umask=077" | /usr/bin/tee -a /etc/pam.d/common-session &>/dev/null
 fi
 
 
 #prompt for domain to join if not provided or parsed
-if [ ! "$HNAME" ]; then
+if [[ ! "$HNAME" ]]; then
     read -p "New Hostname: " HNAME
 fi
 
 
 #prompt for domain to join if not provided or parsed
-if [ ! "$DOMAIN" ]; then
+if [[ ! "$DOMAIN" ]]; then
     read -p "Domain: " DOMAIN
 fi
 
@@ -326,16 +326,16 @@ EOF
 
 
 #prompt for domain join account if not provided
-if [ ! "$DJOINACCOUNT" ]; then
+if [[ ! "$DJOINACCOUNT" ]]; then
     read -p "Username: " DJOINACCOUNT
 fi
 
 
 #define realm command arguments
 REALMARGS="$DOMAIN --user $DJOINACCOUNT --membership-software=adcli"
-if [ "$OUPATH" ]; then
+if [[ "$OUPATH" ]]; then
     OUPATH=${OUPATH^^}
-    if [ "${OUPATH:0:3}" != "OU=" ] && [ "${OUPATH:0:3}" != "CN=" ]; then
+    if [[ "${OUPATH:0:3}" != "OU=" ]] && [[ "${OUPATH:0:3}" != "CN=" ]]; then
     OUPATH="OU=$OUPATH"
     fi
     REALMARGS+=" --computer-ou=\"$OUPATH\""
@@ -345,9 +345,9 @@ fi
 #join domain
 JOINCOUNTER=0
 until /usr/sbin/realm list | eval $GREPCMD $DOMAIN &>/dev/null; do
-    if [ $JOINCOUNTER -gt 2 ]; then
+    if [[ $JOINCOUNTER -gt 2 ]]; then
         $ECHOCMD "ERROR: Authorization failure."
-        if [ "$OLDDOMAIN" ]; then
+        if [[ "$OLDDOMAIN" ]]; then
             OLDHNAME+=".$OLDDOMAIN"
         fi
         /usr/bin/hostnamectl set-hostname $OLDHNAME
@@ -398,7 +398,7 @@ $SYSTEMCTLCMD restart sssd.service
 
 
 #configure authorization
-if [ "$AUTHGROUP" ]; then
+if [[ "$AUTHGROUP" ]]; then
     /usr/sbin/realm permit --groups "$AUTHGROUP"
 fi
 
@@ -410,7 +410,7 @@ eval /usr/sbin/realm list $PIPETONULL
 #configure sudo
 if [[ "$SUDOGROUP" ]]; then
     #escape spaces in group name
-    SUDOGROUP="`$SEDCMD "s/ /\\\\\ /g" <<< "$SUDOGROUP"`"
+    SUDOGROUP="$($SEDCMD "s/ /\\\\\ /g" <<< "$SUDOGROUP")"
     #remove any preexisting authorization for group
     $CATCMD /etc/sudoers | $SEDCMD "/%$($SEDCMD 's/\\/\\\\/g' <<< $SUDOGROUP)/Id" | EDITOR='/usr/bin/tee' /usr/sbin/visudo &>/dev/null
     #authorize group
