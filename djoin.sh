@@ -37,21 +37,19 @@ SYSTEMCTLCMD=$(find_command systemctl) || exit $?
 CHMODCMD=$(find_command chmod) || exit $?
 SEDCMD=$(find_command sed) || exit $?
 HOSTNAMECMD=$(find_command hostname) || exit $?
-CATCMD=$(find_command cat) || exit $?
 TRUE=$(find_command true) || exit $?
 FALSE=$(find_command false) || exit $?
 
 
 #check for root
 if [[ $(/usr/bin/id -u) -ne 0 ]]; then
-   $ECHOCMD "This script must be run as root"
+   $ECHOCMD "This script must be run as root. Try: \"sudo $0\""
    exit 1
 fi
 
 
 #test getopt
-! /usr/bin/getopt --test > /dev/null 
-if [[ ${PIPESTATUS[0]} -ne 4 ]]; then
+if [[ $(/usr/bin/getopt --test; echo $?) != 4 ]]; then
     exit 1
 fi
 
@@ -398,7 +396,7 @@ $SYSTEMCTLCMD restart sssd.service
 
 
 #configure authorization
-if [[ "$AUTHGROUP" ]]; then
+if [[ "$AUTHGROUP" ]] && [[ ! $(/usr/sbin/realm list | $GREPCMD "permitted-groups.*$AUTHGROUP")  ]]; then
     /usr/sbin/realm permit --groups "$AUTHGROUP"
 fi
 
@@ -412,7 +410,7 @@ if [[ "$SUDOGROUP" ]]; then
     #escape spaces in group name
     SUDOGROUP="$($SEDCMD "s/ /\\\\\ /g" <<< "$SUDOGROUP")"
     #remove any preexisting authorization for group
-    $CATCMD /etc/sudoers | $SEDCMD "/%$($SEDCMD 's/\\/\\\\/g' <<< "$SUDOGROUP")/Id" | EDITOR='/usr/bin/tee' /usr/sbin/visudo &>/dev/null
+    < /etc/sudoers $SEDCMD "/%$($SEDCMD 's/\\/\\\\/g' <<< "$SUDOGROUP")/Id" | EDITOR='/usr/bin/tee' /usr/sbin/visudo &>/dev/null
     #authorize group
     if $NOPASS; then
         $ECHOCMD "%$SUDOGROUP    ALL=(ALL)    NOPASSWD:    ALL" | EDITOR='/usr/bin/tee -a' /usr/sbin/visudo &>/dev/null
@@ -423,16 +421,9 @@ fi
 
 
 #configure ssh to use gssapi and disable root login
-$SEDCMD -i "s/GSSAPICleanupCredentials no/GSSAPICleanupCredentials yes/g" /etc/ssh/sshd_config
-$SEDCMD -i "s/PermitRootLogin yes/#PermitRootLogin yes/g" /etc/ssh/sshd_config
-if [ "$DISTRO" = "EL" ]; then
-    $SEDCMD -i "s/GSSAPICleanupCredentials no/GSSAPICleanupCredentials yes/g" /etc/ssh/sshd_config
-    $SEDCMD -i "s/PermitRootLogin yes/PermitRootLogin no/g" /etc/ssh/sshd_config
-elif [ "$DISTRO" = "DEB" ]; then
-    $SEDCMD -i "s/#GSSAPIAuthentication no/GSSAPIAuthentication yes/g" /etc/ssh/sshd_config
-    $SEDCMD -i '/GSSAPICleanupCredentials/s/^#//g' /etc/ssh/sshd_config
-    $SEDCMD -i "/PermitRootLogin yes/d" /etc/ssh/sshd_config
-fi
+$SEDCMD -i "s/$($GREPCMD 'GSSAPIAuthentication' < /etc/ssh/sshd_config)/GSSAPIAuthentication yes/g" /etc/ssh/sshd_config
+$SEDCMD -i "s/$($GREPCMD 'GSSAPICleanupCredentials' < /etc/ssh/sshd_config)/GSSAPICleanupCredentials yes/g" /etc/ssh/sshd_config
+$SEDCMD -i "s/$($GREPCMD 'PermitRootLogin [yn]' < /etc/ssh/sshd_config)/PermitRootLogin no/g" /etc/ssh/sshd_config
 
 
 #restart ssh
@@ -440,7 +431,10 @@ $SYSTEMCTLCMD restart sshd.service
 
 
 #purge user kerberos tickets on logout
-$ECHOCMD kdestroy | /usr/bin/tee /etc/bash.bash_logout &>/dev/null
+/usr/bin/touch /etc/bash.bash_logout
+if [[ ! $($GREPCMD kdestroy < /etc/bash.bash_logout) ]]; then
+    $ECHOCMD kdestroy | /usr/bin/tee /etc/bash.bash_logout &>/dev/null
+fi
 
 
 #remove domain join cronjob and delete script
