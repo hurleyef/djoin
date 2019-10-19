@@ -60,10 +60,7 @@ LONGOPTS=help,newname:,reboot,force,user:,verbose,domain:,authorized-group:,no-s
 
 
 #test args
-! PARSED=$(/usr/bin/getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@")
-if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
-    exit 2
-fi
+PARSED=$(/usr/bin/getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@") || exit $?
 
 
 #read getopt’s output this way to handle the quoting right:
