@@ -173,10 +173,7 @@ fi
 
 
 #set verbose mode
-PIPETONULL='&>/dev/null'
-if $VERBOSE; then
-    PIPETONULL=""
-fi
+$VERBOSE && PIPETONULL=""
 
 
 #detect OS
@@ -240,9 +237,7 @@ fi
 
 
 #enable sssd
-if [[ "$DISTRO" == "EL" ]]; then
-    $SYSTEMCTLCMD enable --now sssd.service &>/dev/null
-fi
+[[ "$DISTRO" = "EL" ]] && $SYSTEMCTLCMD enable --now sssd.service &>/dev/null
 
 
 #generate ssh keys
@@ -257,15 +252,11 @@ fi
 
 
 #prompt for domain to join if not provided or parsed
-if [[ ! "$HNAME" ]]; then
-    read -rp "New Hostname: " HNAME
-fi
+[[ "$HNAME" ]] || read -rp "New Hostname: " HNAME
 
 
 #prompt for domain to join if not provided or parsed
-if [[ ! "$DOMAIN" ]]; then
-    read -rp "Domain: " DOMAIN
-fi
+[[ "$DOMAIN" ]] || read -rp "Domain: " DOMAIN
 
 
 #test domain connectivity
@@ -320,10 +311,8 @@ fully-qualified-names = no
 EOF
 
 
-#prompt for domain join account if not provided
-if [[ ! "$DJOINACCOUNT" ]]; then
-    read -rp "Username: " DJOINACCOUNT
-fi
+#prompt for domain join account if not already provided
+[[ "$DJOINACCOUNT" ]] || read -rp "Username: " DJOINACCOUNT
 
 
 #define realm command arguments
@@ -342,9 +331,7 @@ JOINCOUNTER=0
 until /usr/sbin/realm list | eval "$GREPCMD" "$DOMAIN" &>/dev/null; do
     if [[ $JOINCOUNTER -gt 2 ]]; then
         $ECHOCMD "ERROR: Authorization failure."
-        if [[ "$OLDDOMAIN" ]]; then
-            OLDHNAME+=".$OLDDOMAIN"
-        fi
+        [[ "$OLDDOMAIN" ]] && OLDHNAME+=".$OLDDOMAIN"
         /usr/bin/hostnamectl set-hostname "$OLDHNAME"
         exit 1
     fi
@@ -440,9 +427,7 @@ fi
 
 
 #reboot system
-if $REBOOT; then
-    $SYSTEMCTLCMD reboot
-fi
+$REBOOT && $SYSTEMCTLCMD reboot
 
 
 #fin
