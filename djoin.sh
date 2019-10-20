@@ -16,7 +16,7 @@ fi
 
 
 #function to find commands
-function find_command() {
+find_command() {
     if [[ -f /usr/sbin/$1 ]]; then
         $ECHOCMD "/usr/sbin/$1"
     elif [[ -f /usr/bin/$1 ]]; then
@@ -37,6 +37,7 @@ SYSTEMCTLCMD=$(find_command systemctl) || exit $?
 CHMODCMD=$(find_command chmod) || exit $?
 SEDCMD=$(find_command sed) || exit $?
 HOSTNAMECMD=$(find_command hostname) || exit $?
+UNAMECMD=$(find_command uname) || exit $?
 TRUE=$(find_command true) || exit $?
 FALSE=$(find_command false) || exit $?
 
@@ -49,9 +50,7 @@ fi
 
 
 #test getopt
-if [[ $(/usr/bin/getopt --test; echo $?) != 4 ]]; then
-    exit 1
-fi
+[[ $(/usr/bin/getopt --test; echo $?) = 4 ]] || exit 1
 
 
 #enumerate options
@@ -177,8 +176,9 @@ $VERBOSE && PIPETONULL=""
 
 
 #detect OS
-. /etc/os-release
 if $FORCE; then
+    ID=$($UNAMECMD -o)
+    VERSION_ID=$($UNAMECMD -r)
     if [[ -f /usr/bin/yum ]]; then
         DISTRO="EL"
     elif [[ -f /usr/bin/apt ]]; then
@@ -187,13 +187,15 @@ if $FORCE; then
         $ECHOCMD "ERROR: System not compatible. Must be RHEL or Debian based."
         exit 1
     fi
-elif [[ "$ID" = "centos" ]] || [[ "$ID" = "fedora" ]] || [[ "$ID" = "rhel" ]]; then
+elif . /etc/os-release &>/dev/null; then
+    if [[ "$ID" = "centos" ]] || [[ "$ID" = "fedora" ]] || [[ "$ID" = "rhel" ]]; then
         DISTRO="EL"
     elif [[ "$ID" = "debian" ]] || [[ "$ID" = "ubuntu" ]] || [[ "$ID" = "raspbian" ]]; then
         DISTRO="DEB"
-    else
-        $ECHOCMD "ERROR: System not compatible. Use --force to ignore this check."
-        exit 1
+    fi
+else
+    $ECHOCMD "ERROR: System not compatible. Use --force to ignore this check."
+    exit 1
 fi
 
 
@@ -320,7 +322,7 @@ REALMARGS="$DOMAIN --user $DJOINACCOUNT --membership-software=adcli"
 if [[ "$OUPATH" ]]; then
     OUPATH=${OUPATH^^}
     if [[ "${OUPATH:0:3}" != "OU=" ]] && [[ "${OUPATH:0:3}" != "CN=" ]]; then
-    OUPATH="OU=$OUPATH"
+        OUPATH="OU=$OUPATH"
     fi
     REALMARGS+=" --computer-ou=\"$OUPATH\""
 fi
@@ -394,20 +396,20 @@ if [[ "$SUDOGROUP" ]]; then
     #escape spaces in group name
     SUDOGROUP="$($SEDCMD "s/ /\\\\\ /g" <<< "$SUDOGROUP")"
     #remove any preexisting authorization for group
-    < /etc/sudoers $SEDCMD "/%$($SEDCMD 's/\\/\\\\/g' <<< "$SUDOGROUP")/Id" | EDITOR='/usr/bin/tee' /usr/sbin/visudo &>/dev/null
+    < /etc/sudoers $SEDCMD "/%$($SEDCMD 's/\\/\\\\/g' <<< "$SUDOGROUP")/Id" | EDITOR="/usr/bin/tee" /usr/sbin/visudo &>/dev/null
     #authorize group
     if $NOPASS; then
-        $ECHOCMD "%$SUDOGROUP    ALL=(ALL)    NOPASSWD:    ALL" | EDITOR='/usr/bin/tee -a' /usr/sbin/visudo &>/dev/null
+        $ECHOCMD "%$SUDOGROUP    ALL=(ALL)    NOPASSWD:    ALL" | EDITOR="/usr/bin/tee -a" /usr/sbin/visudo &>/dev/null
     else
-        $ECHOCMD "%$SUDOGROUP    ALL=(ALL)    ALL" | EDITOR='/usr/bin/tee -a' /usr/sbin/visudo &>/dev/null
+        $ECHOCMD "%$SUDOGROUP    ALL=(ALL)    ALL" | EDITOR="/usr/bin/tee -a" /usr/sbin/visudo &>/dev/null
     fi
 fi
 
 
 #configure ssh to use gssapi and disable root login
-$SEDCMD -i "s/$($GREPCMD 'GSSAPIAuthentication' < /etc/ssh/sshd_config)/GSSAPIAuthentication yes/g" /etc/ssh/sshd_config
-$SEDCMD -i "s/$($GREPCMD 'GSSAPICleanupCredentials' < /etc/ssh/sshd_config)/GSSAPICleanupCredentials yes/g" /etc/ssh/sshd_config
-$SEDCMD -i "s/$($GREPCMD 'PermitRootLogin [yn]' < /etc/ssh/sshd_config)/PermitRootLogin no/g" /etc/ssh/sshd_config
+$SEDCMD -i "s/$($GREPCMD "GSSAPIAuthentication" < /etc/ssh/sshd_config)/GSSAPIAuthentication yes/g" /etc/ssh/sshd_config
+$SEDCMD -i "s/$($GREPCMD "GSSAPICleanupCredentials" < /etc/ssh/sshd_config)/GSSAPICleanupCredentials yes/g" /etc/ssh/sshd_config
+$SEDCMD -i "s/$($GREPCMD "PermitRootLogin [yn]" < /etc/ssh/sshd_config)/PermitRootLogin no/g" /etc/ssh/sshd_config
 
 
 #restart ssh
