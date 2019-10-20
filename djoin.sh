@@ -177,8 +177,7 @@ $VERBOSE && PIPETONULL=""
 
 #detect OS
 if $FORCE; then
-    ID=$($UNAMECMD -o)
-    VERSION_ID=$($UNAMECMD -r)
+    . /etc/os-release &>/dev/null || ID=$($UNAMECMD -o) && VERSION_ID=$($UNAMECMD -r)
     if [[ -f /usr/bin/yum ]]; then
         DISTRO="EL"
     elif [[ -f /usr/bin/apt ]]; then
