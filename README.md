@@ -6,6 +6,7 @@ Tested with:</br>
 Centos 7</br>
 Centos 8</br>
 Fedora Server 30</br>
+Fedora Server 31</br>
 Debian 9</br>
 Debian 10</br>
 Raspbian 10</br>
