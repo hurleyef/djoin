@@ -310,19 +310,19 @@ EOF
 
 
 #define realm command arguments
-REALMARGS="$domain --user $djoinAccount --membership-software=adcli"
+realmArgs="'$domain' --user '$djoinAccount' --membership-software=adcli"
 if [[ "$ouPath" ]]; then
     ouPath=${ouPath^^}
     if [[ "${ouPath:0:3}" != "OU=" ]] && [[ "${ouPath:0:3}" != "CN=" ]]; then
         ouPath="OU=$ouPath"
     fi
-    REALMARGS+=" --computer-ou=\"$ouPath\""
+    realmArgs+=" --computer-ou='$ouPath'"
 fi
 
 
 #join domain
 joinCounter=0
-until /usr/sbin/realm list | eval "$grepCmd" "$domain" &>/dev/null; do
+until /usr/sbin/realm list | eval "$grepCmd" "'$domain'" &>/dev/null; do
     if [[ $joinCounter -gt 2 ]]; then
         echo "ERROR: Authorization failure."
         [[ "$oldDomain" ]] && oldHostname+=".$oldDomain"
@@ -332,7 +332,7 @@ until /usr/sbin/realm list | eval "$grepCmd" "$domain" &>/dev/null; do
     #prompt for password
     read -srp "Password: " DJOINPASSWORD
     echo ""
-    echo "$DJOINPASSWORD" | eval /usr/sbin/realm join "$REALMARGS" &>/dev/null || true
+    echo "$DJOINPASSWORD" | eval /usr/sbin/realm join "$realmArgs" &>/dev/null || true
     joinCounter=$((joinCounter+1))
 done
 
@@ -399,9 +399,9 @@ fi
 
 
 #configure ssh to use gssapi and disable root login
-$sedCmd -i "s/$($grepCmd "GSSAPIAuthentication" < /etc/ssh/sshd_config)/GSSAPIAuthentication yes/g" /etc/ssh/sshd_config
-$sedCmd -i "s/$($grepCmd "GSSAPICleanupCredentials" < /etc/ssh/sshd_config)/GSSAPICleanupCredentials yes/g" /etc/ssh/sshd_config
-$sedCmd -i "s/$($grepCmd "PermitRootLogin [yn]" < /etc/ssh/sshd_config)/PermitRootLogin no/g" /etc/ssh/sshd_config
+$sedCmd -i "s/$($grepCmd "GSSAPIAuthentication" < /etc/ssh/sshd_config)/GSSAPIAuthentication yes/g" /etc/ssh/sshd_config &>/dev/null
+$sedCmd -i "s/$($grepCmd "GSSAPICleanupCredentials" < /etc/ssh/sshd_config)/GSSAPICleanupCredentials yes/g" /etc/ssh/sshd_config &>/dev/null
+$sedCmd -i "s/$($grepCmd "PermitRootLogin [yn]" < /etc/ssh/sshd_config)/PermitRootLogin no/g" /etc/ssh/sshd_config &>/dev/null
 
 
 #restart ssh
