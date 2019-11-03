@@ -14,9 +14,6 @@ Ubuntu Server 18.04LTS</br>
 Ubuntu Server 19.04</br>
 </br>
 </br>
-To do: Sort out issues with dns records not being registered consistently across distros in all scenarios.</br>
-</br>
-</br>
 Usage: ./djoin.sh [options]</br>
 Joins Linux system to an AD domain.</br>
 </br>
