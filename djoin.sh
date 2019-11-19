@@ -230,6 +230,13 @@ elif [[ "$distro" = "DEB" ]]; then
 fi
 
 
+#work around bug in adcli version in ubuntu 19.10 repo
+if [[ -f /etc/os-release ]] && $grepCmd "Ubuntu 19.10" /etc/os-release &>/dev/null; then
+    /usr/bin/wget http://ftp.us.debian.org/debian/pool/main/a/adcli/adcli_0.9.0-1_amd64.deb -O /tmp/adcli_0.9.0-1_amd64.deb
+    /usr/bin/dpkg -i /tmp/adcli_0.9.0-1_amd64.deb
+fi
+
+
 #enable sssd
 [[ "$distro" = "EL" ]] && $systemctlCmd enable --now sssd.service &>/dev/null || true
 
