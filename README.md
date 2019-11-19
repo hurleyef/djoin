@@ -12,6 +12,7 @@ Debian 10</br>
 Raspbian 10</br>
 Ubuntu Server 18.04LTS</br>
 Ubuntu Server 19.04</br>
+Ubuntu Server 19.10</br>
 </br>
 </br>
 Usage: ./djoin.sh [options]</br>
