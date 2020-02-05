@@ -160,7 +160,7 @@ fi
 
 
 #set verbose mode
-$verbose && pipeToNull="" || pipeToNull='&>/dev/null'
+$verbose && pipeToNull="" || pipeToNull='1>/dev/null'
 
 
 #detect OS
@@ -261,7 +261,7 @@ fi
 
 
 #test domain connectivity
-eval echo "LOCATING DOMAIN CRONTROLLER FOR ${domain^^}" $pipeToNull
+eval echo "LOCATING DOMAIN CONTROLLER FOR ${domain^^}" $pipeToNull
 if ! eval /usr/bin/nslookup -type=SRV _ldap._tcp.dc._msdcs."$domain" $pipeToNull; then
     echo "ERROR: Cannot locate domain $domain."
     exit 1
