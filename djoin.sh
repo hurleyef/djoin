@@ -234,6 +234,7 @@ fi
 if [[ -f /etc/os-release ]] && $grepCmd "Ubuntu 19.10" /etc/os-release &>/dev/null; then
     /usr/bin/wget http://ftp.us.debian.org/debian/pool/main/a/adcli/adcli_0.9.0-1_amd64.deb -O /tmp/adcli_0.9.0-1_amd64.deb
     /usr/bin/dpkg -i /tmp/adcli_0.9.0-1_amd64.deb
+    /usr/bin/rm /tmp/adcli_0.9.0-1_amd64.deb
 fi
 
 
@@ -247,7 +248,7 @@ eval /usr/bin/ssh-keygen -A $pipeToNull
 
 
 #configure pam
-if [[ "$distro" == "DEB" ]]; then
+if [[ "$distro" = "DEB" ]] && ! $grepCmd "session required pam_mkhomedir.so skel=/etc/skel/ umask=077" /etc/pam.d/common-session; then
     echo "session required pam_mkhomedir.so skel=/etc/skel/ umask=077" | /usr/bin/tee -a /etc/pam.d/common-session &>/dev/null
 fi
 
@@ -261,7 +262,7 @@ fi
 
 
 #test domain connectivity
-eval echo "LOCATING DOMAIN CONTROLLER FOR ${domain^^}" $pipeToNull
+eval echo "LOCATING DOMAIN CRONTROLLER FOR ${domain^^}" $pipeToNull
 if ! eval /usr/bin/nslookup -type=SRV _ldap._tcp.dc._msdcs."$domain" $pipeToNull; then
     echo "ERROR: Cannot locate domain $domain."
     exit 1
@@ -281,8 +282,6 @@ fi
  forwardable = true
  default_realm = ${domain^^}
  default_ccache_name = KEYRING:persistent:%{uid}
-
- default_realm = ${domain^^}
 [realms]
  ${domain^^} = {
  }
@@ -355,9 +354,8 @@ services = nss, pam
 ad_domain = $domain
 krb5_realm = ${domain^^}
 #default_domain_suffix = $domain
-use_fully_qualified_names = false
+use_fully_qualified_names = False
 
-re_expression = (((?P<domain>[^\\\]+)\\\(?P<name>.+$))|((?P<name>[^@]+)@(?P<domain>.+$))|(^(?P<name>[^@\\\]+)$))
 realmd_tags = manages-system joined-with-samba
 cache_credentials = True
 id_provider = ad
@@ -375,6 +373,7 @@ dyndns_refresh_interval = 43200
 dyndns_update_ptr = true
 dyndns_ttl = 3600
 ldap_id_mapping = true
+ldap_idmap_autorid_compat = true
 EOF
 $chmodCmd 600 /etc/sssd/sssd.conf
 $systemctlCmd restart sssd.service
@@ -418,7 +417,7 @@ $systemctlCmd restart sshd.service
 #purge user kerberos tickets on logout
 /usr/bin/touch /etc/bash.bash_logout
 if [[ ! $($grepCmd kdestroy < /etc/bash.bash_logout) ]]; then
-    echo kdestroy | /usr/bin/tee /etc/bash.bash_logout &>/dev/null
+    echo kdestroy | /usr/bin/tee /etc/bash.bash_logout &>/dev/nullcat
 fi
 
 
